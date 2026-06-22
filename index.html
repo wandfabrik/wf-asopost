@@ -293,11 +293,12 @@ function qrBox(ctx,x,y,size,pad){
   ctx.fillStyle='#fff'; ctx.fill(); ctx.strokeStyle='#EADFC2'; ctx.lineWidth=3; ctx.stroke();
   paintQR(ctx,x,y,size);
 }
-function drawSig(ctx,x,byY,logoY,w){           // 左上基準・presents by + ロゴ
-  ctx.textAlign='left'; ctx.textBaseline='top';
-  ctx.fillStyle='#b3a98a'; ctx.font='700 22px "Zen Maru Gothic"';
+function drawSig(ctx,align,x,byPx,byY,logoW,logoY){   // presents by + ロゴ（align: 'center' | 'left'）
+  ctx.textBaseline='top'; ctx.textAlign=align;
+  ctx.fillStyle='#b3a98a'; ctx.font=`700 ${byPx}px "Zen Maru Gothic"`;
   ctx.fillText('presents by',x,byY);
-  try{ ctx.drawImage(logoImg,x,logoY,w,w/LOGO_RATIO); }catch(e){}
+  const lx = align==='center' ? x-logoW/2 : x;
+  try{ ctx.drawImage(logoImg,lx,logoY,logoW,logoW/LOGO_RATIO); }catch(e){}
 }
 
 async function exportCard(){
@@ -318,44 +319,63 @@ async function exportCard(){
 }
 
 function drawPostcard(cv,game){
-  const W=1181,H=1748; cv.width=W; cv.height=H;
-  const ctx=cv.getContext('2d'); const cx=W/2;
+  const S=1181/300;                              // プレビュー .card.postcard(幅300px) → 印刷1181px
+  const W=1181, H=Math.round(W*148/100);         // 1748
+  cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d'), cx=W/2;
+  const padX=22*S;
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#EE8B2C'; ctx.fillRect(0,0,W,24);
-  ctx.strokeStyle='#EADFC2'; ctx.lineWidth=4; ctx.strokeRect(48,58,W-96,H-104);
+  ctx.fillStyle='#EE8B2C'; ctx.fillRect(0,0,W,Math.round(6*S));   // 上のオレンジ帯(.card::before)
   ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='#4A3F33';
-  const lines=wrapText(ctx,`『${game}』`,'900 88px "Zen Maru Gothic"',W-230);
-  ctx.font='900 88px "Zen Maru Gothic"'; let ty=158;
-  lines.slice(0,2).forEach(l=>{ctx.fillText(l,cx,ty);ty+=104;});
-  ctx.font='700 54px "Zen Maru Gothic"'; ctx.fillText('で遊びました！',cx,ty); ty+=72;
-  const qrSize=750,qrX=cx-qrSize/2,qrY=Math.max(ty+34,460);
-  qrBox(ctx,qrX,qrY,qrSize,28);
-  ctx.fillStyle='#C9650F'; ctx.font='900 56px "Zen Maru Gothic"'; ctx.textAlign='center';
-  ctx.fillText('読み取りで感想をポスト',cx,qrY+qrSize+28+66);
-  // 署名（中央寄せ）
-  const sigW=300, sigX=cx-sigW/2;
-  drawSig(ctx,sigX,H-238,H-208,sigW);
+  let ty=26*S+6*S;                               // 上padding(26) + 帯ぶん
+  const titlePx=Math.round(21*S);
+  const lines=wrapText(ctx,`『${game}』`,`900 ${titlePx}px "Zen Maru Gothic"`,W-padX*2);
+  ctx.font=`900 ${titlePx}px "Zen Maru Gothic"`;
+  lines.slice(0,2).forEach(l=>{ctx.fillText(l,cx,ty); ty+=titlePx*1.25;});
+  const subPx=Math.round(16*S);
+  ctx.font=`700 ${subPx}px "Zen Maru Gothic"`; ctx.fillText('で遊びました！',cx,ty); ty+=subPx*1.25;
+  const qr=Math.round(150*S), qpad=Math.round(10*S);   // .qrhold: QR150 + padding10
+  ty+=14*S;                                      // .qrhold margin-top
+  qrBox(ctx,cx-qr/2,ty,qr,qpad);
+  ty+=qr+qpad+12*S;                              // QR下端 + margin-bottom
+  const ctaPx=Math.round(14.5*S);
+  ctx.fillStyle='#C9650F'; ctx.font=`900 ${ctaPx}px "Zen Maru Gothic"`;
+  ctx.fillText('読み取りで感想をポスト',cx,ty);
+  // 署名（.csig: margin-top:auto で下寄せ・中央）
+  const logoW=Math.round(118*S), byPx=Math.round(9*S);
+  const logoY=H-18*S-logoW/LOGO_RATIO;           // 下padding(18)
+  drawSig(ctx,'center',cx,byPx,logoY-byPx*1.7,logoW,logoY);
 }
 
 function drawMeishi(cv,game){
-  const W=1075,H=650; cv.width=W; cv.height=H;
+  const S=1075/392;                              // プレビュー .card.meishi(幅392px) → 印刷1075px
+  const W=1075, H=Math.round(W*55/91);           // 650
+  cv.width=W; cv.height=H;
   const ctx=cv.getContext('2d');
+  const padX=22*S, padY=20*S, gapX=16*S, gap=4*S;
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#EE8B2C'; ctx.fillRect(0,0,W,16);
-  ctx.strokeStyle='#EADFC2'; ctx.lineWidth=3; ctx.strokeRect(34,40,W-68,H-74);
-  const qrSize=420, qrX=W-qrSize-74, qrY=(H-qrSize)/2+2;
-  qrBox(ctx,qrX,qrY,qrSize,20);
-  const lx=74, lw=qrX-22-lx;
+  ctx.fillStyle='#EE8B2C'; ctx.fillRect(0,0,W,Math.round(6*S));   // 帯
+  // 右：QR（縦中央）
+  const qr=Math.round(120*S), qpad=Math.round(10*S), qBox=qr+qpad*2;
+  const qBoxX=W-padX-qBox, qBoxY=(H-qBox)/2;
+  qrBox(ctx,qBoxX+qpad,qBoxY+qpad,qr,qpad);
+  // 左カラム（title / で遊びました(右揃え) / cta / 署名）を縦中央に積む
+  const lx=padX, lw=qBoxX-gapX-lx;
+  const titlePx=Math.round(17*S), subPx=Math.round(13*S),
+        ctaPx=Math.round(14.5*S), byPx=Math.round(9*S),
+        logoW=Math.round(96*S), logoH=Math.round(96*S)/LOGO_RATIO;
+  ctx.font=`900 ${titlePx}px "Zen Maru Gothic"`;
+  const lines=wrapText(ctx,`『${game}』`,`900 ${titlePx}px "Zen Maru Gothic"`,lw).slice(0,2);
+  const totalH=lines.length*titlePx*1.25 + subPx*1.3 + gap + ctaPx + gap + byPx*1.5 + logoH;
+  let ty=Math.max(padY,(H-totalH)/2);
   ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillStyle='#4A3F33';
-  const lines=wrapText(ctx,`『${game}』`,'900 46px "Zen Maru Gothic"',lw);
-  ctx.font='900 46px "Zen Maru Gothic"'; let ty=108;
-  lines.slice(0,2).forEach(l=>{ctx.fillText(l,lx,ty);ty+=56;});
-  // 「で遊びました！」右揃え
-  ctx.textAlign='right'; ctx.font='700 32px "Zen Maru Gothic"';
-  ctx.fillText('で遊びました！',lx+lw,ty); ty+=60;
-  ctx.textAlign='left'; ctx.fillStyle='#C9650F'; ctx.font='900 30px "Zen Maru Gothic"';
-  ctx.fillText('読み取りで感想をポスト',lx,ty);
-  drawSig(ctx,lx,H-128,H-104,160);
+  ctx.font=`900 ${titlePx}px "Zen Maru Gothic"`;
+  lines.forEach(l=>{ctx.fillText(l,lx,ty); ty+=titlePx*1.25;});
+  ctx.textAlign='right'; ctx.font=`700 ${subPx}px "Zen Maru Gothic"`;
+  ctx.fillText('で遊びました！',lx+lw,ty); ty+=subPx*1.3+gap;
+  ctx.textAlign='left'; ctx.fillStyle='#C9650F'; ctx.font=`900 ${ctaPx}px "Zen Maru Gothic"`;
+  ctx.fillText('読み取りで感想をポスト',lx,ty); ty+=ctaPx+gap;
+  drawSig(ctx,'left',lx,byPx,ty,logoW,ty+byPx*1.5);
 }
 
 function wrapText(ctx,text,font,maxW){
