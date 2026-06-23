@@ -20,11 +20,6 @@
 - カードは Canvas に約 300dpi で描画して PNG 書き出し
 - 表示フォントは Zen Maru Gothic、QR 生成に qrcode-generator を使用
 
-## 構成
-
-- `index.html` — 単一ファイルで完結（ロゴ画像は埋め込み済み）
-- `.nojekyll` — GitHub Pages の Jekyll 処理を無効化
-
 ## 制作
 
 Wand Fabrik
