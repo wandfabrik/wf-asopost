@@ -143,7 +143,7 @@ function drawCard(cv,mode,S){
   cv.width=Math.round(sz.w*S); cv.height=Math.round(sz.h*S);
   const ctx=cv.getContext('2d');
   ctx.setTransform(S,0,0,S,0,0);                  // 以降すべて設計単位で描く
-  ctx.fillStyle='#fff'; ctx.fillRect(0,0,sz.w,sz.h);
+  ctx.fillStyle='#fbfeff'; ctx.fillRect(0,0,sz.w,sz.h);
   ctx.fillStyle='#EE8B2C'; ctx.fillRect(0,0,sz.w,6);   // 上のオレンジ帯
   if(mode==='postcard') drawPostcard(ctx,st,sz,S); else drawMeishi(ctx,st,sz,S);
 }
