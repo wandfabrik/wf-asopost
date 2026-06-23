@@ -105,7 +105,7 @@ function drawQR(ctx,qr,x,y,size,S){
 }
 function qrFrame(ctx,x,y,size,pad){              // QRの白枠（.qrhold相当・設計単位）
   roundRect(ctx,x-pad,y-pad,size+pad*2,size+pad*2,8);
-  ctx.fillStyle='#fff'; ctx.fill();
+  ctx.fillStyle='#fbfeff'; ctx.fill();
   ctx.strokeStyle='#EADFC2'; ctx.lineWidth=1; ctx.stroke();
 }
 function ghostBox(ctx,x,y,size,pad){             // 未入力時のQRプレースホルダ
