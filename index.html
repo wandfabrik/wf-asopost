@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>あそポス：遊びましたをポスト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brandrow">
+      <span class="logo" id="logoName">あそポス</span>
+      <span class="tagline" id="tagline">遊びましたをポスト</span>
+    </div>
+    <p class="lead"><span class="s"><span>QRコードの読み取りで、</span><span>感想ツイートの下書きが生成されます。</span></span><span class="s"><span>試遊卓に置いたり、</span><span>パッケージに封入したり、</span><span>ご自由に利用ください。</span></span></p>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-label="カードを作る">
+      <div class="field">
+        <label class="lbl" for="game">ゲーム名<span class="hint">40文字まで</span></label>
+        <input type="text" id="game" placeholder="例：ごきぶりポーカー" autocomplete="off" maxlength="40">
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="handle">メンションするアカウント<span class="hint">任意・投稿に @ が付きます</span></label>
+        <div class="inwrap">
+          <span class="at">@</span>
+          <input type="text" id="handle" class="hashandle" placeholder="wand_fabrik" autocomplete="off" maxlength="15">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="tags">ハッシュタグ<span class="hint">任意・#不要でスペース区切り</span></label>
+        <input type="text" id="tags" placeholder="例：イベント名 ボードゲーム" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label class="lbl">印刷サイズ</label>
+        <div class="seg" role="group" aria-label="印刷サイズ">
+          <button type="button" id="size-postcard" aria-pressed="true">ポストカード<span class="sub">100×148mm</span></button>
+          <button type="button" id="size-meishi" aria-pressed="false">名刺<span class="sub">91×55mm</span></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="tweetbox">
+          <div class="k">POSTされる文章</div>
+          <div class="t" id="tweetPreview">『　　』で遊びました！</div>
+          <a class="testlink" id="testLink" href="#" target="_blank" rel="noopener" aria-disabled="true">▶ 投稿画面を確認する</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="カードのプレビュー">
+      <span class="stagelabel" id="stageLabel">印刷されるカード（ポストカード・縦）</span>
+      <canvas class="cardview" id="card"></canvas>
+      <div id="logoHolder" hidden>
+          <img class="csig-logo" id="cardSig" alt="Wand Fabrik" src="wf_lpgo.png">
+      </div>
+
+      <div class="actions">
+        <button class="btn-outline btn-export" id="exportBtn" disabled>印刷用カードを書き出す（PNG）</button>
+        <p class="hintline" id="dpiHint">100×148mm / 約300dpi。そのまま印刷できます。</p>
+      </div>
+    </section>
+  </div>
+
+  <footer class="funnel">
+    <div class="f-copy">
+      <div class="ft">Wand Fabrik がつくりました</div>
+      <div class="fs"><span>ボードゲームのイベント制作、</span><span>クリエイティブディレクション、</span><span>PRはお任せください！</span></div>
+    </div>
+    <a class="btn-outline worksbtn" id="worksLink" href="#" target="_blank" rel="noopener">くわしく見る</a>
+  </footer>
+</div>
+
+<canvas id="exportCanvas" style="display:none"></canvas>
+
+<script src="app.js"></script>
+</body>
+</html>
