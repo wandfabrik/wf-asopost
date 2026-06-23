@@ -181,9 +181,8 @@ function drawMeishi(ctx,st,sz,S){
   const subPx=13, ctaPx=14.5, byPx=9, logoW=96, logoH=96/LOGO_RATIO;
   const label= st.hasGame?`『${st.game}』`:'『ゲーム名』';
   const fit=fitLines(ctx,label,titleFont,lw,17,11,3);
-  // 本文（タイトル/サブ/CTA）はロゴを含めず縦中央寄せ。ロゴは左下角に固定する。
-  const textH=fit.lines.length*fit.px*1.25 + subPx*1.3 + gap + ctaPx;
-  let ty=Math.max(padY,(H-textH)/2);
+  // 本文（タイトル/サブ/CTA）は上揃えでタイトルを上に置く。ロゴは左下角に固定する。
+  let ty=padY;
   ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillStyle=tcol;
   ctx.font=titleFont(fit.px);
   fit.lines.forEach(l=>{ctx.fillText(l,lx,ty); ty+=fit.px*1.25;});
