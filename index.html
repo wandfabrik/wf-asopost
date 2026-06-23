@@ -252,21 +252,25 @@ sizeMeishi.addEventListener('click',()=>setSize('meishi'));
  *  設計単位＝プレビューCSS px。倍率Sを掛けるだけで両対応。
  *  S=devicePixelRatio → プレビュー / S=exportW/w → 300dpi書き出し
  * ====================================================== */
-function paintQR(ctx,qr,x,y,size){
-  const n=qr.getModuleCount(),cell=size/n; ctx.fillStyle='#4A3F33';
+/* QRだけは整数スナップのためデバイスpxで描く（変換を一旦解除）*/
+function drawQR(ctx,qr,x,y,size,S){
+  ctx.save(); ctx.setTransform(1,0,0,1,0,0);
+  const n=qr.getModuleCount(), ox=x*S, oy=y*S, sz=size*S, cell=sz/n;
+  ctx.fillStyle='#4A3F33';
   for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(qr.isDark(r,c))
-    ctx.fillRect(Math.round(x+c*cell),Math.round(y+r*cell),Math.ceil(cell),Math.ceil(cell));
+    ctx.fillRect(Math.round(ox+c*cell),Math.round(oy+r*cell),Math.ceil(cell),Math.ceil(cell));
+  ctx.restore();
 }
-function qrFrame(ctx,x,y,size,pad,S){           // QRの白枠（.qrhold相当）
-  roundRect(ctx,x-pad,y-pad,size+pad*2,size+pad*2,8*S);
+function qrFrame(ctx,x,y,size,pad){              // QRの白枠（.qrhold相当・設計単位）
+  roundRect(ctx,x-pad,y-pad,size+pad*2,size+pad*2,8);
   ctx.fillStyle='#fff'; ctx.fill();
-  ctx.strokeStyle='#EADFC2'; ctx.lineWidth=Math.max(1,Math.round(S)); ctx.stroke();
+  ctx.strokeStyle='#EADFC2'; ctx.lineWidth=1; ctx.stroke();
 }
-function ghostBox(ctx,x,y,size,pad,S){          // 未入力時のQRプレースホルダ
-  qrFrame(ctx,x,y,size,pad,S);
+function ghostBox(ctx,x,y,size,pad){             // 未入力時のQRプレースホルダ
+  qrFrame(ctx,x,y,size,pad);
   ctx.save();
   ctx.fillStyle='#cfc4a6'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.font=`500 ${Math.round(12*S)}px "Zen Maru Gothic"`;
+  ctx.font='500 12px "Zen Maru Gothic"';
   ctx.fillText('入力するとQRが出ます',x+size/2,y+size/2);
   ctx.restore();
 }
@@ -289,54 +293,52 @@ function fitLines(ctx,text,fontOf,maxW,basePx,minPx,maxLines){
   return {lines,px:minPx};
 }
 
-/* 1枚のカードを cv に倍率Sで描く（プレビューも書き出しもこれ） */
+/* 1枚のカードを cv に倍率Sで描く。
+   レイアウトは常に設計単位（=プレビューCSS px）で計算し、setTransform(S)で拡大。
+   → S=devicePixelRatio でも S=300dpi でも行分割・配置が完全一致する。*/
 function drawCard(cv,mode,S){
   const sz=SIZES[mode], st=state();
-  const W=Math.round(sz.w*S), H=Math.round(sz.h*S);
-  cv.width=W; cv.height=H;
+  cv.width=Math.round(sz.w*S); cv.height=Math.round(sz.h*S);
   const ctx=cv.getContext('2d');
-  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#EE8B2C'; ctx.fillRect(0,0,W,Math.round(6*S));   // 上のオレンジ帯
-  if(mode==='postcard') drawPostcard(ctx,st,S,W,H); else drawMeishi(ctx,st,S,W,H);
+  ctx.setTransform(S,0,0,S,0,0);                  // 以降すべて設計単位で描く
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,sz.w,sz.h);
+  ctx.fillStyle='#EE8B2C'; ctx.fillRect(0,0,sz.w,6);   // 上のオレンジ帯
+  if(mode==='postcard') drawPostcard(ctx,st,sz,S); else drawMeishi(ctx,st,sz,S);
 }
 
-function drawPostcard(ctx,st,S,W,H){
-  const cx=W/2, padX=22*S, tcol= st.hasGame?'#4A3F33':'#cfc4a6';
+function drawPostcard(ctx,st,sz,S){
+  const W=sz.w, H=sz.h, cx=W/2, padX=22, tcol= st.hasGame?'#4A3F33':'#cfc4a6';
   const titleFont=px=>`900 ${px}px "Zen Maru Gothic"`;
   const label= st.hasGame?`『${st.game}』`:'『ゲーム名』';
   ctx.textAlign='center'; ctx.textBaseline='top';
-  let ty=26*S+6*S;                               // 上padding(26) + 帯ぶん
-  const fit=fitLines(ctx,label,titleFont,W-padX*2,Math.round(21*S),Math.round(14*S),3);
+  let ty=26+6;                                    // 上padding(26) + 帯(6)
+  const fit=fitLines(ctx,label,titleFont,W-padX*2,21,14,3);
   ctx.fillStyle=tcol; ctx.font=titleFont(fit.px);
   fit.lines.forEach(l=>{ctx.fillText(l,cx,ty); ty+=fit.px*1.25;});
-  const subPx=Math.round(16*S);
-  ctx.font=`700 ${subPx}px "Zen Maru Gothic"`; ctx.fillStyle=tcol;
-  ctx.fillText('で遊びました！',cx,ty); ty+=subPx*1.25;
-  const qr=Math.round(150*S), qpad=Math.round(10*S), qx=cx-qr/2;
-  ty+=14*S;                                      // .qrhold margin-top
-  if(st.hasGame){ qrFrame(ctx,qx,ty,qr,qpad,S); paintQR(ctx,makeQR(st.url),qx,ty,qr); }
-  else ghostBox(ctx,qx,ty,qr,qpad,S);
-  ty+=qr+qpad+12*S;                              // QR下端 + margin-bottom
-  const ctaPx=Math.round(14.5*S);
-  ctx.fillStyle='#C9650F'; ctx.textAlign='center'; ctx.font=`900 ${ctaPx}px "Zen Maru Gothic"`;
+  ctx.font='700 16px "Zen Maru Gothic"'; ctx.fillStyle=tcol;
+  ctx.fillText('で遊びました！',cx,ty); ty+=16*1.25;
+  const qr=150, qpad=10, qx=cx-qr/2;
+  ty+=14;                                         // .qrhold margin-top
+  if(st.hasGame){ qrFrame(ctx,qx,ty,qr,qpad); drawQR(ctx,makeQR(st.url),qx,ty,qr,S); }
+  else ghostBox(ctx,qx,ty,qr,qpad);
+  ty+=qr+qpad+12;                                 // QR下端 + margin-bottom
+  ctx.fillStyle='#C9650F'; ctx.textAlign='center'; ctx.font='900 14.5px "Zen Maru Gothic"';
   ctx.fillText('読み取りで感想をポスト',cx,ty);
-  const logoW=Math.round(118*S), byPx=Math.round(9*S);
-  const logoY=H-18*S-logoW/LOGO_RATIO;           // 下padding(18)
+  const logoW=118, byPx=9, logoY=H-18-logoW/LOGO_RATIO;   // 下padding(18)
   drawSig(ctx,'center',cx,byPx,logoY-byPx*1.7,logoW,logoY);
 }
 
-function drawMeishi(ctx,st,S,W,H){
-  const padX=22*S, padY=20*S, gapX=16*S, gap=4*S, tcol= st.hasGame?'#4A3F33':'#cfc4a6';
-  const qr=Math.round(120*S), qpad=Math.round(10*S), qBox=qr+qpad*2;
+function drawMeishi(ctx,st,sz,S){
+  const W=sz.w, H=sz.h, padX=22, padY=20, gapX=16, gap=4, tcol= st.hasGame?'#4A3F33':'#cfc4a6';
+  const qr=120, qpad=10, qBox=qr+qpad*2;
   const qBoxX=W-padX-qBox, qBoxY=(H-qBox)/2, qx=qBoxX+qpad, qy=qBoxY+qpad;
-  if(st.hasGame){ qrFrame(ctx,qx,qy,qr,qpad,S); paintQR(ctx,makeQR(st.url),qx,qy,qr); }
-  else ghostBox(ctx,qx,qy,qr,qpad,S);
+  if(st.hasGame){ qrFrame(ctx,qx,qy,qr,qpad); drawQR(ctx,makeQR(st.url),qx,qy,qr,S); }
+  else ghostBox(ctx,qx,qy,qr,qpad);
   const lx=padX, lw=qBoxX-gapX-lx;
   const titleFont=px=>`900 ${px}px "Zen Maru Gothic"`;
-  const subPx=Math.round(13*S), ctaPx=Math.round(14.5*S), byPx=Math.round(9*S),
-        logoW=Math.round(96*S), logoH=Math.round(96*S)/LOGO_RATIO;
+  const subPx=13, ctaPx=14.5, byPx=9, logoW=96, logoH=96/LOGO_RATIO;
   const label= st.hasGame?`『${st.game}』`:'『ゲーム名』';
-  const fit=fitLines(ctx,label,titleFont,lw,Math.round(17*S),Math.round(11*S),3);
+  const fit=fitLines(ctx,label,titleFont,lw,17,11,3);
   const totalH=fit.lines.length*fit.px*1.25 + subPx*1.3 + gap + ctaPx + gap + byPx*1.5 + logoH;
   let ty=Math.max(padY,(H-totalH)/2);
   ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillStyle=tcol;
