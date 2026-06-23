@@ -96,7 +96,7 @@
   <div class="grid">
     <section class="panel" aria-label="カードを作る">
       <div class="field">
-        <label class="lbl" for="game">ゲーム名</label>
+        <label class="lbl" for="game">ゲーム名<span class="hint">40文字まで</span></label>
         <input type="text" id="game" placeholder="例：ごきぶりポーカー" autocomplete="off" maxlength="40">
       </div>
 
@@ -339,16 +339,19 @@ function drawMeishi(ctx,st,sz,S){
   const subPx=13, ctaPx=14.5, byPx=9, logoW=96, logoH=96/LOGO_RATIO;
   const label= st.hasGame?`『${st.game}』`:'『ゲーム名』';
   const fit=fitLines(ctx,label,titleFont,lw,17,11,3);
-  const totalH=fit.lines.length*fit.px*1.25 + subPx*1.3 + gap + ctaPx + gap + byPx*1.5 + logoH;
-  let ty=Math.max(padY,(H-totalH)/2);
+  // 本文（タイトル/サブ/CTA）はロゴを含めず縦中央寄せ。ロゴは左下角に固定する。
+  const textH=fit.lines.length*fit.px*1.25 + subPx*1.3 + gap + ctaPx;
+  let ty=Math.max(padY,(H-textH)/2);
   ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillStyle=tcol;
   ctx.font=titleFont(fit.px);
   fit.lines.forEach(l=>{ctx.fillText(l,lx,ty); ty+=fit.px*1.25;});
   ctx.textAlign='right'; ctx.font=`700 ${subPx}px "Zen Maru Gothic"`; ctx.fillStyle=tcol;
   ctx.fillText('で遊びました！',lx+lw,ty); ty+=subPx*1.3+gap;
   ctx.textAlign='left'; ctx.fillStyle='#C9650F'; ctx.font=`900 ${ctaPx}px "Zen Maru Gothic"`;
-  ctx.fillText('読み取りで感想をポスト',lx,ty); ty+=ctaPx+gap;
-  drawSig(ctx,'left',lx,byPx,ty,logoW,ty+byPx*1.5);
+  ctx.fillText('読み取りで感想をポスト',lx,ty);
+  // ロゴ＝左下角に固定（presents by はロゴ直上）
+  const logoY=H-padY-logoH;
+  drawSig(ctx,'left',lx,byPx,logoY-byPx*1.7,logoW,logoY);
 }
 
 /* ===== 書き出し（プレビューと同じ drawCard、倍率だけ300dpi）===== */
