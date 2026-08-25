@@ -49,10 +49,12 @@ function buildText(game){ return `『${game||'　　'}』で遊びました！`;
 function cleanHandle(raw){ return (raw||'').replace(/[@＠\s]/g,'').replace(/[^A-Za-z0-9_]/g,''); }
 function parseTags(raw){ return (raw||'').replace(/#/g,'').split(/[\s,、　]+/).map(s=>s.trim()).filter(Boolean); }
 function buildIntentUrl(game,handle,tags){
+  // ハッシュタグは text に直接入れる。intent の hashtags パラメータは
+  // Xモバイルアプリのディープリンク処理で無視され、タグが消えるため。
   let text=buildText(game);
   if(handle) text+=` @${handle}`;
+  if(tags.length) text+=' '+tags.map(t=>`#${t}`).join(' ');
   const p=new URLSearchParams(); p.set('text',text);
-  if(tags.length) p.set('hashtags',tags.join(','));
   return 'https://twitter.com/intent/tweet?'+p.toString();
 }
 function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
